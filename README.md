@@ -8,7 +8,9 @@ the badge uses a custom board based on the Arduino MKR Zero. to flash it, open t
 
 during open sauce 2026, we were lucky enough to get an "eyebrow module" for our badges on saturday, and the badge designer (caleb) mentioned he hoped someone would hack it. so, yeah, had to do that. later that night i dumped the firmware and looked around in ghidra to identify what was going on. the original firmware is effectively the "bop it" game. you react to prompts by triggering inputs and keep going until you fail.
 
-since there are some natural features for creating a menu of 5 slots (plus secrets), i figured it would be cool to make five games/apps for the badge. i also added an "attract mode" for people to have a little light show on their badge while they walk around.
+since there are some natural features for creating a menu of 5 slots (plus secrets), we figured it would be cool to make five games/apps for the badge. i also added an "attract mode" for people to have a little light show on their badge while they walk around.
+
+with the help of gerard hudson, we threw this together in about 3 hours after we got back late on saturday. it was a necessary evil to use some AI tools, so credit is due to GLM 5.2 for making something functional. i definitely had to go back and clean some things up but it blows my mind how fast you can work in a pinch.
 
 ### included modes
 
