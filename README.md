@@ -2,7 +2,7 @@
 
 this firmware is a replacement for the firmware included on the 2026 open sauce badge.
 
-the badge uses a custom board based on the Arduino MKR Zero. to flash it, open the .ino in Arduino IDE and choose the MKR Zero as your board. make sure to install the necessary libraries in your library manager. specifically ou need `Adafruit_LIS3DH`, `Adafruit_FreeTouch`, and `FlashStorage`.
+the badge uses a custom board based on the Arduino MKR Zero. to flash it, open the .ino in Arduino IDE and choose the MKR Zero as your board. make sure to install the necessary libraries in your library manager. specifically you need `Adafruit_LIS3DH`, `Adafruit_FreeTouch`, and `FlashStorage`.
 
 ### how this came to be
 
@@ -49,6 +49,7 @@ you can power the badge with the battery on the back or via USB. you can also at
 4. persistence of vision tricks with the 5 mouth leds?
 5. probably some kind of power saving strategy would be good
 6. add SAO support in the firmware particularly for attract mode
+7. a call-and-response rhythm game?
 
 ### license
 
