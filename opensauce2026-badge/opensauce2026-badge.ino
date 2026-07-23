@@ -2111,15 +2111,14 @@ const unsigned long HOLD_TIME = 300; // ms
   }
 
   touchPadState = digitalOcarinaGetState();
-
   switch(touchPadState){
-  case 0b1000: currNote = NOTE_C4; break;
-  case 0b0100: currNote = NOTE_D4; break;
-  case 0b1100: currNote = NOTE_E4; break;
-  case 0b0010: currNote = NOTE_F4; break;
-  case 0b1010: currNote = NOTE_G4; break;
-  case 0b0110: currNote = NOTE_A4; break;
-  case 0b1110: currNote = NOTE_B4; break;
+  case 0b001: currNote = NOTE_C4; break;
+  case 0b010: currNote = NOTE_D4; break;
+  case 0b011: currNote = NOTE_E4; break;
+  case 0b100: currNote = NOTE_F4; break;
+  case 0b101: currNote = NOTE_G4; break;
+  case 0b110: currNote = NOTE_A4; break;
+  case 0b111: currNote = NOTE_B4; break;
   }
   }
 }
