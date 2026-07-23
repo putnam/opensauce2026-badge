@@ -179,6 +179,15 @@ const int NUM_UNIQUE_PADS = 6;
 #define NOTE_D5  587
 #define NOTE_E5  659
 
+// And a few more for Da Funk
+#define NOTE_Ab4 415
+#define NOTE_Gb4 370
+#define NOTE_Eb4 311
+#define NOTE_Db4 277
+#define NOTE_B3  247
+#define NOTE_Bb3 233
+#define NOTE_Ab3 208
+
 // Menu navigation tick notes: C minor scale, first 5 degrees (C D Eb F G),
 // one per menu slot left-to-right.
 const int MENU_NOTE_FREQS[5] = {523, 587, 622, 698, 784}; // C5 D5 Eb5 F5 G5
@@ -684,7 +693,7 @@ void checkAttractEasterEgg() {
     // was active - pinMode(OUTPUT) releases the pin from PWM; analogWrite(0)
     // would not (it still engages the timer peripheral at 0% duty).
     resetAllLedsToDigitalOutput();
-    playSandstorm(); // loops forever; only exits via the 3s kill switch, which itself re-enters attract mode
+    playSandstorm(); // blocks
   }
 }
 
@@ -1132,57 +1141,95 @@ void playSandstorm() {
   int numNotes = sizeof(melody) / sizeof(melody[0]);
 
   while (true) { // loops indefinitely - only exits when the button is pressed
-  for (int thisNote = 0; thisNote < numNotes; thisNote++) {
-    // Any button press exits immediately back to attract mode - no hold needed
-    updateButtonDebounce();
-    if (isButtonPressed()) {
+    for (int thisNote = 0; thisNote < numNotes; thisNote++) {
+      // Any button press exits immediately back to attract mode - no hold needed
+      updateButtonDebounce();
+      if (isButtonPressed()) {
+        noTone(PIN_PIEZO);
+        exitAllLedsAndEnterAttract();
+        return;
+      }
+
+      int noteDuration = 1500 / noteDurations[thisNote];
+      int totalTime = noteDuration * 1.30;
+      int ledOnTime = noteDuration / 2;
+      int ledOffTime = totalTime - ledOnTime;
+
+      if (noteDurations[thisNote] == 16) {
+        // Sparkle effect: each of the 5 small LEDs gets a 50% chance to light
+        for (int i = 0; i < 5; i++) {
+          if (random(2) == 1) digitalWrite(PIN_BANK[i], HIGH);
+        }
+        // Each of the 3 large LEDs gets a 50% chance to light
+        if (random(2) == 1) digitalWrite(PIN_LED_LEFTEYE, HIGH);
+        if (random(2) == 1) digitalWrite(PIN_LED_RIGHTEYE, HIGH);
+        if (random(2) == 1) digitalWrite(PIN_LED_FOREHEAD, HIGH);
+        if (random(2) == 1) digitalWrite(PIN_LED_SAO, HIGH);
+
+      } else {
+        // Map pitch to the 5 small LEDs for the longer 8th notes
+        int activeLed = map(melody[thisNote], NOTE_A4, NOTE_E5, 0, 4);
+        activeLed = constrain(activeLed, 0, 4);
+        digitalWrite(PIN_BANK[activeLed], HIGH);
+
+        // Trigger the 3 large LEDs heavily on the 8th notes
+        if (noteDurations[thisNote] == 8) {
+          digitalWrite(PIN_LED_LEFTEYE, HIGH);
+          digitalWrite(PIN_LED_RIGHTEYE, HIGH);
+          digitalWrite(PIN_LED_FOREHEAD, HIGH);
+          digitalWrite(PIN_LED_SAO, HIGH);
+        }
+      }
+
+      tone(PIN_PIEZO, melody[thisNote], noteDuration);
+
+      delay(ledOnTime);
+
+      // Turn ALL LEDs OFF to guarantee the strobe gap
+      clearAllLeds();
+
+      delay(ledOffTime);
+
       noTone(PIN_PIEZO);
-      exitAllLedsAndEnterAttract();
-      return;
     }
+  } // end while(true)
+}
 
-    int noteDuration = 1500 / noteDurations[thisNote];
-    int totalTime = noteDuration * 1.30;
-    int ledOnTime = noteDuration / 2;
-    int ledOffTime = totalTime - ledOnTime;
+// Eh, Sandstorm was more fun, but I'm leaving it in.
+void playDaFunk() {
+  int melody[] = {
+    NOTE_Ab4, NOTE_Gb4, NOTE_Ab4, NOTE_B4, NOTE_Eb4, NOTE_Db4, NOTE_Eb4,
+    NOTE_Gb4, NOTE_B3, NOTE_Bb3, NOTE_B3, NOTE_Eb4, NOTE_Ab3, NOTE_Bb3,
+    NOTE_B3
+    // 15 notes
+  };
+  // I really should've used a different notation system and implemented rests
+  // 0.8 = 5 beats
+  float noteDurations[] = {
+    1, 4, 4, 4, 0.8,
+    4, 4, 4, 0.8,
+    4, 4, 4, 0.8,
+    2, 2
+  };
 
-    if (noteDurations[thisNote] == 16) {
-      // Sparkle effect: each of the 5 small LEDs gets a 50% chance to light
-      for (int i = 0; i < 5; i++) {
-        if (random(2) == 1) digitalWrite(PIN_BANK[i], HIGH);
+  int numNotes = sizeof(melody) / sizeof(melody[0]);
+
+  while (true) { // loops indefinitely - only exits when the button is pressed
+    for (int thisNote = 0; thisNote < numNotes; thisNote++) {
+      // Any button press exits immediately back to attract mode - no hold needed
+      updateButtonDebounce();
+      if (isButtonPressed()) {
+        noTone(PIN_PIEZO);
+        exitAllLedsAndEnterAttract();
+        return;
       }
-      // Each of the 3 large LEDs gets a 50% chance to light
-      if (random(2) == 1) digitalWrite(PIN_LED_LEFTEYE, HIGH);
-      if (random(2) == 1) digitalWrite(PIN_LED_RIGHTEYE, HIGH);
-      if (random(2) == 1) digitalWrite(PIN_LED_FOREHEAD, HIGH);
-      if (random(2) == 1) digitalWrite(PIN_LED_SAO, HIGH);
 
-    } else {
-      // Map pitch to the 5 small LEDs for the longer 8th notes
-      int activeLed = map(melody[thisNote], NOTE_A4, NOTE_E5, 0, 4);
-      activeLed = constrain(activeLed, 0, 4);
-      digitalWrite(PIN_BANK[activeLed], HIGH);
+      int noteDuration = 1250 / noteDurations[thisNote];
 
-      // Trigger the 3 large LEDs heavily on the 8th notes
-      if (noteDurations[thisNote] == 8) {
-        digitalWrite(PIN_LED_LEFTEYE, HIGH);
-        digitalWrite(PIN_LED_RIGHTEYE, HIGH);
-        digitalWrite(PIN_LED_FOREHEAD, HIGH);
-        digitalWrite(PIN_LED_SAO, HIGH);
-      }
+      tone(PIN_PIEZO, melody[thisNote], noteDuration);
+      delay(noteDuration);
+      noTone(PIN_PIEZO);
     }
-
-    tone(PIN_PIEZO, melody[thisNote], noteDuration);
-
-    delay(ledOnTime);
-
-    // Turn ALL LEDs OFF to guarantee the strobe gap
-    clearAllLeds();
-
-    delay(ledOffTime);
-
-    noTone(PIN_PIEZO);
-  }
   } // end while(true)
 }
 
