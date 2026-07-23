@@ -2111,6 +2111,10 @@ const unsigned long HOLD_TIME = 300; // ms
   }
 
   touchPadState = digitalOcarinaGetState();
+  digitalWrite(PIN_BANK[0], touchPadState & 1);
+  digitalWrite(PIN_BANK[2], (touchPadState & 2) << 1);
+  digitalWrite(PIN_BANK[4], (touchPadState & 4) << 2);
+  
   switch(touchPadState){
   case 0b001: currNote = NOTE_C4; break;
   case 0b010: currNote = NOTE_D4; break;
