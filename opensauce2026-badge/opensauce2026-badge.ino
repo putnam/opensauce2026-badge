@@ -188,9 +188,19 @@ const int NUM_UNIQUE_PADS = 6;
 #define NOTE_Bb3 233
 #define NOTE_Ab3 208
 
+// and finally the last lot for the ocarina
+#define NOTE_C4 262
+#define NOTE_D4 294
+#define NOTE_E4 330
+#define NOTE_F4 349
+#define NOTE_G4 392
+#define NOTE_A4 440
+#define NOTE_B4 494
+#define NOTE_C5 523
+
 // Menu navigation tick notes: C minor scale, first 5 degrees (C D Eb F G),
 // one per menu slot left-to-right.
-const int MENU_NOTE_FREQS[5] = {523, 587, 622, 698, 784}; // C5 D5 Eb5 F5 G5
+const int MENU_NOTE_FREQS[6] = {523, 587, 622, 698, 784, 880}; // C5 D5 Eb5 F5 G5
 
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
@@ -710,12 +720,12 @@ void enterMenu() {
   tone(PIN_PIEZO, MENU_NOTE_FREQS[menuSelectedIndex], 30); // play slot 0's note on entry too
   menuLastActivityTime = millis();
   Serial.println("Menu: short tap = next option, long press = select.");
-  Serial.println("  0: Bop-It   1: Simon   2: Balloon   3: RoboTheremin   4: Drum Machine");
+  Serial.println("  0: Bop-It   1: Simon   2: Balloon   3: RoboTheremin   4: Drum Machine  5: Digital Ocarina");
 }
 
 void updateMenuLeds() {
   allBankOff();
-  digitalWrite(PIN_BANK[menuSelectedIndex], HIGH);
+  for(int i = 0; i < 6; i++) if((menuSelectedIndex + 1) & bit(i)) digitalWrite(PIN_BANK[i], HIGH);
 }
 
 // Handles button press/release timing for both ATTRACT and MENU states.
@@ -760,7 +770,7 @@ void handleMenuNavButton() {
       if (heldMs >= LONG_PRESS_MS) {
         selectMenuOption(menuSelectedIndex);
       } else {
-        menuSelectedIndex = (menuSelectedIndex + 1) % 5;
+        menuSelectedIndex = (menuSelectedIndex + 1) % 6;
         updateMenuLeds();
         tone(PIN_PIEZO, MENU_NOTE_FREQS[menuSelectedIndex], 30); // rises one note per slot
       }
@@ -804,7 +814,10 @@ void selectMenuOption(int idx) {
     roboThereminGame(); // loops until the 3s exit hold; forces Attract mode itself
   } else if (idx == 4) {
     drumMachineGame(); // loops until the 3s exit hold; forces Attract mode itself
-  } else {
+  } else if(idx == 5){
+    digitalOcarina(); // loops until the 3s exit hold; forces Attract mode itself
+  }
+  else {
     Serial.print("Slot ");
     Serial.print(idx);
     Serial.println(" has no game yet.");
@@ -2023,7 +2036,96 @@ void drumMachineGame() {
     updateDrumMix(); // continuously render whatever voices are currently active, mixed together
   }
 }
+// ---------------- Slot 6: Ocarina ----------------
+uint8_t digitalOcarinaGetState(){
+  static uint8_t state = 0;
+  static const int PAD_COUNT = 6;
+  static bool stateArray[PAD_COUNT] = {0};
+  static bool padWasActive[PAD_COUNT] = {0};       // debounced/stable state
+  static bool padRawLastReading[PAD_COUNT] = {0};  // last raw (undebounced) reading
+  static unsigned long padLastChangeTime[PAD_COUNT] = {0};        // when the raw reading last changed
+  static const unsigned long PAD_DEBOUNCE_MS = 10; // require a stable reading this long before accepting it
 
+ for (int i = 0; i < PAD_COUNT; i++) {
+    bool rawActive = touchIsActive(i);
+
+    if (rawActive != padRawLastReading[i]) {
+        padLastChangeTime[i] = millis();
+        padRawLastReading[i] = rawActive;
+    }
+
+    if (millis() - padLastChangeTime[i] > PAD_DEBOUNCE_MS) {
+        padWasActive[i] = rawActive;
+    }
+}
+
+state =
+    (padWasActive[0]  | padWasActive[1])       |
+    ((padWasActive[2] | padWasActive[3]) << 1) |
+    ((padWasActive[4] | padWasActive[5]) << 2);
+    
+  return state;
+}
+
+void digitalOcarina() {
+    Serial.println("Digital Ocarina: Press combos of touch pads and blow into mic to play notes. Hold button 3s to exit.");
+  unsigned long holdStart = 0;
+  bool wasPressed = false;
+  bool isPlaying = false;
+  unsigned long previousMillis = 0;
+  uint16_t currNote = 0;
+  uint8_t touchPadState = 0;
+unsigned long lastBlowTime = 0;
+const unsigned long HOLD_TIME = 300; // ms
+  allBankOff();
+  while (true) {
+    // 3-second exit-hold check
+    updateButtonDebounce();
+    bool pressedNow = isButtonPressed();
+    if (pressedNow && !wasPressed) holdStart = millis();
+    if (pressedNow && millis() - holdStart >= EXIT_HOLD_MS) {
+      digitalWrite(LED_BUILTIN, HIGH); // "you've held long enough, release now"
+      exitIndicatorLedOn = true;
+      noTone(PIN_PIEZO);
+      exitAllLedsAndEnterAttract();
+      return;
+    }
+    wasPressed = pressedNow;
+    
+  unsigned long currentMillis = millis();
+
+
+  if (checkMicTriggered()) {
+    lastBlowTime = millis();
+  }
+
+  if ((millis() - lastBlowTime < HOLD_TIME) && !isPlaying) {
+    tone(PIN_PIEZO, currNote);
+    isPlaying = true;
+    Serial.println(currNote);
+  }
+
+  if ((millis() - lastBlowTime >= HOLD_TIME) && isPlaying) {
+    noTone(PIN_PIEZO);
+    isPlaying = false;
+  }
+
+  touchPadState = digitalOcarinaGetState();
+  digitalWrite(PIN_BANK[0], touchPadState & 1);
+  digitalWrite(PIN_BANK[2], (touchPadState & 2) << 1);
+  digitalWrite(PIN_BANK[4], (touchPadState & 4) << 2);
+  
+  switch(touchPadState){
+  case 0b001: currNote = NOTE_C4; break;
+  case 0b010: currNote = NOTE_D4; break;
+  case 0b011: currNote = NOTE_E4; break;
+  case 0b100: currNote = NOTE_F4; break;
+  case 0b101: currNote = NOTE_G4; break;
+  case 0b110: currNote = NOTE_A4; break;
+  case 0b111: currNote = NOTE_B4; break;
+  }
+  }
+}
 // ---------------- Touch pads ----------------
 
 // FreeTouch can be pretty noisy. Humidity varies. Pull a few samples to calibrate.
