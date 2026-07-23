@@ -190,7 +190,7 @@ const int NUM_UNIQUE_PADS = 6;
 
 // Menu navigation tick notes: C minor scale, first 5 degrees (C D Eb F G),
 // one per menu slot left-to-right.
-const int MENU_NOTE_FREQS[5] = {523, 587, 622, 698, 784}; // C5 D5 Eb5 F5 G5
+const int MENU_NOTE_FREQS[6] = {523, 587, 622, 698, 784, 880}; // C5 D5 Eb5 F5 G5
 
 Adafruit_LIS3DH lis = Adafruit_LIS3DH();
 
@@ -715,7 +715,7 @@ void enterMenu() {
 
 void updateMenuLeds() {
   allBankOff();
-  digitalWrite(PIN_BANK[menuSelectedIndex], HIGH);
+  for(int i = 0; i < 6; i++) if((menuSelectedIndex + 1) & bit(i)) digitalWrite(PIN_BANK[i], HIGH);
 }
 
 // Handles button press/release timing for both ATTRACT and MENU states.
@@ -760,7 +760,7 @@ void handleMenuNavButton() {
       if (heldMs >= LONG_PRESS_MS) {
         selectMenuOption(menuSelectedIndex);
       } else {
-        menuSelectedIndex = (menuSelectedIndex + 1) % 5;
+        menuSelectedIndex = (menuSelectedIndex + 1) % 6;
         updateMenuLeds();
         tone(PIN_PIEZO, MENU_NOTE_FREQS[menuSelectedIndex], 30); // rises one note per slot
       }
