@@ -14,7 +14,7 @@ with the help of gerard hudson, we threw this together in about 3 hours after we
 
 ### included modes
 
-attract mode: six different light animations. tap the robot's teeth pads to choose between them.
+attract mode: six different light animations. tap the robot's teeth pads to choose between them. includes the LEDs on SAO modules if you have them attached (via SAO pin GPIO2 -- see "notes on SAOs" below)
 
 slot 1 - bop it 2.0: like the original bop-it, but with advancing difficulty tiers and some music cues.
 
@@ -41,6 +41,12 @@ in addition to the above modes, there is a special event that occurs if you brus
 
 you can power the badge with the battery on the back or via USB. you can also attach a battery holder to the 3v3 override pads on the bottom rear. the possibilities are endless!
 
+### notes on SAOs
+
+at open sauce 2026 there were a few different SAO modules handed out (a robot arm, a cowboy hat, the robot cube head) that all are basic LED modules. on a fully-built badge, these modules will light up solid (3v3 is tied directly to the LED circuit). but on the back of the SAO is a set of three pads that say "LED select". if you carefully cut the bridge between the first two pads, then solder together the right two pads, you'll bridge GPIO2 to the LED line so it can be driven by the firmware instead. now that SAO will participate in attract modes.
+
+third-party SAOs are untested right now. this firmware just drives the GPIO2 pin when in attract mode as if it's a light. the standard includes pins for an i2c bus which the board does implement, but i don't have any sample SAOs to integrate into the firmware at this time.
+
 ### todo / ideas
 
 1. add quantized scale options to the robotheremin
@@ -48,8 +54,7 @@ you can power the badge with the battery on the back or via USB. you can also at
 3. a balance game?
 4. persistence of vision tricks with the 5 mouth leds?
 5. probably some kind of power saving strategy would be good
-6. add SAO support in the firmware particularly for attract mode
-7. a call-and-response rhythm game?
+6. a call-and-response rhythm game?
 
 ### license
 
